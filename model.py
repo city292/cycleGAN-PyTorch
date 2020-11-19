@@ -1,3 +1,4 @@
+import codecs
 import itertools
 import functools
 
@@ -10,6 +11,43 @@ import torchvision.transforms as transforms
 import utils
 from arch import define_Gen, define_Dis, set_grad
 from torch.optim import lr_scheduler
+from torch.utils.data import Dataset
+from PIL import Image
+import numpy as np
+
+
+def read_txt(path):
+    file = codecs.open(path, 'r', 'utf-8')
+    data = []
+    for line in file.read().splitlines():
+        data.append(line)
+    file.close()
+    return data
+
+
+class ListDataSet(Dataset):
+    def __init__(self, list_path, transform=None):
+        self.list_path = list_path
+        self.img_ids = [i_id.strip() for i_id in open(list_path)]
+        self.transform = transform
+        self.files = []
+        f = read_txt(self.list_path)
+
+        for line in f:
+            image, mask = line.split(' ')
+
+            self.files.append(image)
+        self.max_len = len(self.files)
+
+    def __len__(self):
+        return self.max_len
+
+    def __getitem__(self, index):
+        image = Image.open(self.files[index]).convert('RGB')
+
+        image = self.transform(image)
+
+        return image, np.array([3, 256, 256])
 
 '''
 Class for CycleGAN with train() as a member function
@@ -26,7 +64,10 @@ class cycleGAN(object):
                                                     use_dropout= not args.no_dropout, gpu_ids=args.gpu_ids)
         self.Da = define_Dis(input_nc=3, ndf=args.ndf, netD= args.dis_net, n_layers_D=3, norm=args.norm, gpu_ids=args.gpu_ids)
         self.Db = define_Dis(input_nc=3, ndf=args.ndf, netD= args.dis_net, n_layers_D=3, norm=args.norm, gpu_ids=args.gpu_ids)
-
+        print(self.Gab)
+        print(self.Gba)
+        print(self.Da)
+        print(self.Db)
         utils.print_networks([self.Gab,self.Gba,self.Da,self.Db], ['Gab','Gba','Da','Db'])
 
         # Define Loss criterias
@@ -75,8 +116,8 @@ class cycleGAN(object):
              ])
 
         dataset_dirs = utils.get_traindata_link(args.dataset_dir)
-        # dataset_a = dsets.
-        # dataset_b = dsets.ImageFolder(dataset_dirs['trainA'], transform=transform)
+        dataset_a = ListDataSet('/media/l/新加卷1/city/data/river/train_256_9w.lst', transform=transform)
+        dataset_b = ListDataSet('/media/l/新加卷/city/jinan_z3.lst', transform=transform)
         # Pytorch dataloader
         a_loader = torch.utils.data.DataLoader(dataset_a, batch_size=args.batch_size, shuffle=True, num_workers=4)
         b_loader = torch.utils.data.DataLoader(dataset_b, batch_size=args.batch_size, shuffle=True, num_workers=4)
@@ -182,8 +223,8 @@ class cycleGAN(object):
                 b_dis_loss.backward()
                 self.d_optimizer.step()
 
-                print("Epoch: (%3d) (%5d/%5d) | Gen Loss:%.2e | Dis Loss:%.2e" % 
-                                            (epoch, i + 1, min(len(a_loader), len(b_loader)),
+                print("Epoch: (%3d) (%5d/%5d) | Gen Loss:%.4f | Dis Loss:%.4f" %
+                      (epoch, i + 1, min(len(a_loader), len(b_loader)),
                                                             gen_loss,a_dis_loss+b_dis_loss))
 
             # Override the latest checkpoint
@@ -201,6 +242,3 @@ class cycleGAN(object):
             ########################
             self.g_lr_scheduler.step()
             self.d_lr_scheduler.step()
-
-
-

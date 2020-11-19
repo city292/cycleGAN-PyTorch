@@ -20,8 +20,8 @@ def get_args():
     parser.add_argument('--lamda', type=int, default=10)
     parser.add_argument('--idt_coef', type=float, default=0.5)
     parser.add_argument('--training', type=bool, default=False)
-    parser.add_argument('--testing', type=bool, default=False)
-    parser.add_argument('--results_dir', type=str, default='./results')
+    parser.add_argument('--testing', type=bool, default=True)
+    parser.add_argument('--results_dir', type=str, default='/media/l/新加卷/city/project/cycleGAN-PyTorch/results')
     parser.add_argument('--dataset_dir', type=str, default='./datasets/horse2zebra')
     parser.add_argument('--checkpoint_dir', type=str, default='./checkpoints/horse2zebra')
     parser.add_argument('--norm', type=str, default='instance', help='instance normalization or batch normalization')
@@ -52,6 +52,7 @@ def main():
       model.train(args)
   if args.testing:
       print("Testing")
+      print(args)
       tst.test(args)
 
 

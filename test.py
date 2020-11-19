@@ -7,20 +7,22 @@ import torchvision.datasets as dsets
 import torchvision.transforms as transforms
 import utils
 from arch import define_Gen, define_Dis
-
+from model import ListDataSet
 
 def test(args):
 
     transform = transforms.Compose(
         [transforms.Resize((args.crop_height,args.crop_width)),
          transforms.ToTensor(),
-         transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5])])
+         # transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5])
+         ])
 
     dataset_dirs = utils.get_testdata_link(args.dataset_dir)
 
-    a_test_data = dsets.ImageFolder(dataset_dirs['testA'], transform=transform)
-    b_test_data = dsets.ImageFolder(dataset_dirs['testB'], transform=transform)
-
+    # a_test_data = dsets.ImageFolder(dataset_dirs['testA'], transform=transform)
+    # b_test_data = dsets.ImageFolder(dataset_dirs['testB'], transform=transform)
+    a_test_data = ListDataSet('/media/l/新加卷1/city/data/river/train_256_9w.lst', transform=transform)
+    b_test_data = ListDataSet('/media/l/新加卷/city/jinan_z3.lst', transform=transform)
 
     a_test_loader = torch.utils.data.DataLoader(a_test_data, batch_size=args.batch_size, shuffle=True, num_workers=4)
     b_test_loader = torch.utils.data.DataLoader(b_test_data, batch_size=args.batch_size, shuffle=True, num_workers=4)
@@ -33,32 +35,31 @@ def test(args):
     utils.print_networks([Gab,Gba], ['Gab','Gba'])
 
     try:
-        ckpt = utils.load_checkpoint('%s/latest.ckpt' % (args.checkpoint_dir))
+        ckpt = utils.load_checkpoint('/media/l/新加卷/city/project/cycleGAN-PyTorch/checkpoints/horse2zebra/latest.ckpt')
         Gab.load_state_dict(ckpt['Gab'])
         Gba.load_state_dict(ckpt['Gba'])
     except:
         print(' [*] No checkpoint!')
 
+    for i in range(10):
+        """ run """
+        a_real_test = Variable(iter(a_test_loader).next()[0], requires_grad=True)
+        b_real_test = Variable(iter(b_test_loader).next()[0], requires_grad=True)
+        a_real_test, b_real_test = utils.cuda([a_real_test, b_real_test])
 
-    """ run """
-    a_real_test = Variable(iter(a_test_loader).next()[0], requires_grad=True)
-    b_real_test = Variable(iter(b_test_loader).next()[0], requires_grad=True)
-    a_real_test, b_real_test = utils.cuda([a_real_test, b_real_test])
-            
+        Gab.eval()
+        Gba.eval()
 
-    Gab.eval()
-    Gba.eval()
+        with torch.no_grad():
+            a_fake_test = Gab(b_real_test)
+            b_fake_test = Gba(a_real_test)
+            a_recon_test = Gab(b_fake_test)
+            b_recon_test = Gba(a_fake_test)
 
-    with torch.no_grad():
-        a_fake_test = Gab(b_real_test)
-        b_fake_test = Gba(a_real_test)
-        a_recon_test = Gab(b_fake_test)
-        b_recon_test = Gba(a_fake_test)
+        pic = (torch.cat([a_real_test, b_fake_test, a_recon_test, b_real_test, a_fake_test, b_recon_test],
+                         dim=0).data + 1) / 2.0
 
-    pic = (torch.cat([a_real_test, b_fake_test, a_recon_test, b_real_test, a_fake_test, b_recon_test], dim=0).data + 1) / 2.0
+        if not os.path.isdir(args.results_dir):
+            os.makedirs(args.results_dir)
 
-    if not os.path.isdir(args.results_dir):
-        os.makedirs(args.results_dir)
-
-    torchvision.utils.save_image(pic, args.results_dir+'/sample.jpg', nrow=3)
-
+        torchvision.utils.save_image(pic, args.results_dir + '/sample_%d.png' % i, nrow=3)
