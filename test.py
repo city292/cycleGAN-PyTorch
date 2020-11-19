@@ -9,9 +9,6 @@ import utils
 from arch import define_Gen, define_Dis
 
 
-
-
-
 def test(args):
 
     transform = transforms.Compose(

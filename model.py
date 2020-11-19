@@ -67,18 +67,19 @@ class cycleGAN(object):
         # For transforming the input image
         transform = transforms.Compose(
             [transforms.RandomHorizontalFlip(),
-             transforms.Resize((args.load_height,args.load_width)),
+             transforms.RandomVerticalFlip(),
+             # transforms.Resize((args.load_height,args.load_width)),
              transforms.RandomCrop((args.crop_height,args.crop_width)),
              transforms.ToTensor(),
-             transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5])])
+             # transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5])
+             ])
 
         dataset_dirs = utils.get_traindata_link(args.dataset_dir)
-
+        # dataset_a = dsets.
+        # dataset_b = dsets.ImageFolder(dataset_dirs['trainA'], transform=transform)
         # Pytorch dataloader
-        a_loader = torch.utils.data.DataLoader(dsets.ImageFolder(dataset_dirs['trainA'], transform=transform), 
-                                                        batch_size=args.batch_size, shuffle=True, num_workers=4)
-        b_loader = torch.utils.data.DataLoader(dsets.ImageFolder(dataset_dirs['trainB'], transform=transform), 
-                                                        batch_size=args.batch_size, shuffle=True, num_workers=4)
+        a_loader = torch.utils.data.DataLoader(dataset_a, batch_size=args.batch_size, shuffle=True, num_workers=4)
+        b_loader = torch.utils.data.DataLoader(dataset_b, batch_size=args.batch_size, shuffle=True, num_workers=4)
 
         a_fake_sample = utils.Sample_from_Pool()
         b_fake_sample = utils.Sample_from_Pool()

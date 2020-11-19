@@ -3,6 +3,7 @@ from torch.nn import init
 import torch.nn as nn
 import torch
 
+
 def get_norm_layer(norm_type='instance'):
     if norm_type == 'batch':
         norm_layer = functools.partial(nn.BatchNorm2d, affine=True)
@@ -11,6 +12,7 @@ def get_norm_layer(norm_type='instance'):
     else:
         raise NotImplementedError('normalization layer [%s] is not found' % norm_type)
     return norm_layer
+
 
 def init_weights(net, init_type='normal', gain=0.02):
     def init_func(m):
@@ -42,11 +44,13 @@ def conv_norm_lrelu(in_dim, out_dim, kernel_size, stride = 1, padding=0,
         nn.Conv2d(in_dim, out_dim, kernel_size, stride, padding, bias = bias),
         norm_layer(out_dim), nn.LeakyReLU(0.2,True))
 
+
 def conv_norm_relu(in_dim, out_dim, kernel_size, stride = 1, padding=0,
                                  norm_layer = nn.BatchNorm2d, bias = False):
     return nn.Sequential(
         nn.Conv2d(in_dim, out_dim, kernel_size, stride, padding, bias = bias),
         norm_layer(out_dim), nn.ReLU(True))
+
 
 def dconv_norm_relu(in_dim, out_dim, kernel_size, stride = 1, padding=0, output_padding=0,
                                  norm_layer = nn.BatchNorm2d, bias = False):
@@ -60,14 +64,13 @@ class ResidualBlock(nn.Module):
     def __init__(self, dim, norm_layer, use_dropout, use_bias):
         super(ResidualBlock, self).__init__()
         res_block = [nn.ReflectionPad2d(1),
-                     conv_norm_relu(dim, dim, kernel_size=3, 
-                     norm_layer= norm_layer, bias=use_bias)]
+                     conv_norm_relu(dim, dim, kernel_size=3,
+                                    norm_layer=norm_layer, bias=use_bias)]
         if use_dropout:
             res_block += [nn.Dropout(0.5)]
         res_block += [nn.ReflectionPad2d(1),
                       nn.Conv2d(dim, dim, kernel_size=3, padding=0, bias=use_bias),
                       norm_layer(dim)]
-
         self.res_block = nn.Sequential(*res_block)
 
     def forward(self, x):
