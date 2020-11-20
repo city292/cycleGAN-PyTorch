@@ -32,7 +32,7 @@ def test(args):
     Gba = define_Gen(input_nc=3, output_nc=3, ngf=args.ngf, netG='resnet_9blocks', norm=args.norm, 
                                                     use_dropout= not args.no_dropout, gpu_ids=args.gpu_ids)
 
-    utils.print_networks([Gab,Gba], ['Gab','Gba'])
+    utils.print_networks([Gab, Gba], ['Gab', 'Gba'])
 
     try:
         ckpt = utils.load_checkpoint('/media/l/新加卷/city/project/cycleGAN-PyTorch/checkpoints/horse2zebra/latest.ckpt')
@@ -40,8 +40,8 @@ def test(args):
         Gba.load_state_dict(ckpt['Gba'])
     except:
         print(' [*] No checkpoint!')
-
-    for i in range(10):
+    res = []
+    for i in range(3):
         """ run """
         a_real_test = Variable(iter(a_test_loader).next()[0], requires_grad=True)
         b_real_test = Variable(iter(b_test_loader).next()[0], requires_grad=True)
@@ -55,11 +55,15 @@ def test(args):
             b_fake_test = Gba(a_real_test)
             a_recon_test = Gab(b_fake_test)
             b_recon_test = Gba(a_fake_test)
+        res.append(a_real_test)
+        res.append(b_fake_test)
+        res.append(b_real_test)
+        res.append(a_fake_test)
 
-        pic = (torch.cat([a_real_test, b_fake_test, a_recon_test, b_real_test, a_fake_test, b_recon_test],
-                         dim=0).data + 1) / 2.0
+    pic = (torch.cat(res,
+                     dim=0).data + 1) / 2.0
 
-        if not os.path.isdir(args.results_dir):
-            os.makedirs(args.results_dir)
+    if not os.path.isdir(args.results_dir):
+        os.makedirs(args.results_dir)
 
-        torchvision.utils.save_image(pic, args.results_dir + '/sample_%d.png' % i, nrow=3)
+    torchvision.utils.save_image(pic, args.results_dir + '/sample.png', nrow=2)

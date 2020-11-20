@@ -235,7 +235,8 @@ class cycleGAN(object):
                                    'Gab': self.Gab.state_dict(),
                                    'Gba': self.Gba.state_dict(),
                                    'd_optimizer': self.d_optimizer.state_dict(),
-                                   'g_optimizer': self.g_optimizer.state_dict()},
+                                   'g_optimizer': self.g_optimizer.state_dict(),
+                                   },
                                   '%s/latest.ckpt' % (args.checkpoint_dir))
 
             # Update learning rates
