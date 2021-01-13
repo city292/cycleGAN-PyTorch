@@ -1,0 +1,8 @@
+.idea/cycleGAN-PyTorch.iml
+.idea/deployment.xml
+.idea/misc.xml
+.idea/modules.xml
+.idea/vcs.xml
+.idea/workspace.xml
+checkpoints/horse2zebra/latest.ckpt
+results/sample.png
